@@ -7,15 +7,15 @@ and food (food) in Brazilian retail. In, January to April 2021, the company reco
 orders from deliveries, stores, hubs.
 
 ## Task:
-I was hired by Delivery Center to create a database for them to monitor progress of the company using 
-data and make factual decisions for the future. Furthermore, I was also required to conduct preliminary 
+I was hired by Delivery Center to create a database to monitor progress of the company using 
+data and make factual decisions for the future. Furthermore, I was also required to conduct a preliminary 
 analysis regarding some of the topics they were interested in. To complete this task I was provided with 
 data collected by the company which can be downloaded from [Kaggle](https://www.kaggle.com/nosbielcs/brazilian-delivery-center). 
 The data provided allows for viewing the data from multiple dimensions, such as orders, payments, 
 deliveries, channels, stores and hubs provided.
 
 To address the task above, my goal was to first create a central data warehouse using different datasets provided by 
-Delivery Center and then create data marts for my analytics. The entire process of achieving the my goal has been 
+the Delivery Center and then create data marts for my analytics. The entire process of achieving the my goal has been 
 explained in the throughout this document. Below you can find the description of the dataset.
 
 The dataset included the following tables:
@@ -34,7 +34,7 @@ To begin work it was essential to understand the dynamics and constraints of the
 
 Orders table: order_created_hour, order_created_minute, order_moment_accepted, order_moment_collected, order_moment_in_expedition, order_moment_delivering, order_moment_delivered, order_metric_collected_time, order_metric_production_time, order_metric_walking_time, order_metric_expediton_speed_time, order_metric_transit_time, order_metric_cycle_time
 
-Before I begin loading the data I mapped out the existing relationships between the tables which acted as foundation for further analysis. I noticed that all tables were easily joinable because each table already had a primary and at least one foreign key. When loading the data I defined both the primary key and the foreign key wherever possible. For few tables I had to reverse engineer and add join manually. I started by creating the database/schema. Inside the database, individual tables were created for the tables mentioned above (dataset provided by Delivery Center). Operational layer was created using following [queries](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/op_layer_deliveries_brazil.sql).
+Before I began loading the data I mapped out the existing relationships between the tables which acted as foundation for further analysis. I noticed that all tables were easily joinable because each table already had a primary and at least one foreign key. When loading the data I defined both the primary key and the foreign key wherever possible. For few tables I had to reverse engineer and add join manually. I started by creating the database/schema. Inside the database, individual tables were created for the tables mentioned above (dataset provided by Delivery Center). Operational layer was created using following [queries](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/op_layer_deliveries_brazil.sql).
 
  
 <details>
@@ -253,7 +253,7 @@ All the relationships between the tables loaded in the database are 1:n (one-to-
 
 ## Analytical Questions:
 
-I felt at this point it was important to list down the analytical questions I planned to answer as a part of this exercise to better understand what to include in the data warehouse from the tables. The main idea was to record and report the performance of Delivery Center in last four months. To do that the main analytical questions was further divided in four sub-questions, which are:
+I felt at this point it was important to list down the analytical questions I planned to answer as a part of this exercise to better understand what to include in the data warehouse from the tables. The main idea was to record and report the performance of Delivery Center in last four months. To achieve that the main analytical questions were further divided in four sub-questions:
 
 1.	Monthly sales report (with option of choosing the month and daily sale from each segment of stores)
 2.	Top 10 stores by share of total sales 
@@ -264,7 +264,7 @@ I felt at this point it was important to list down the analytical questions I pl
 
 ## Analytical Layer: 
 
-For the analytical layer, I created the data warehouse and stored it into the table “sales_details” using the following [queries](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/sales_deliveries_brazil_dw.sql). The [ETL Diagram](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/ETL_Diagram.png) below explains the entire ETL pipeline from start to end.
+For the analytical layer, I created the data warehouse and stored it into the table “sales_details” using the following [queries](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/sales_deliveries_brazil_dw.sql). The [ETL Diagram](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/ETL_Diagram.png) below explains the entire ETL pipeline from start to finish.
 
 
 <details>
@@ -334,7 +334,7 @@ CALL CreateSalesDatawarehouse_Deliveries_Brazil();</pre>
 
 ![ETL pipeline](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/ETL_Diagram.png)
 
-The data warehouse “sales_details” contains specific fields from all the tables created as a part of operational layer. To create the data warehouse, I first created a procedure that would join the tables to create the data warehouse. Below is a quick snapshot of the columns in the data warehouse.
+The data warehouse “sales_details” contains specific fields from all the tables created as a part of the operational layer. To create the data warehouse, I first created a procedure that would join the tables to create the data warehouse. Below is a quick snapshot of the columns in the data warehouse.
 
 ![warehouse](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/dw(sales_details)_table.png)
 
