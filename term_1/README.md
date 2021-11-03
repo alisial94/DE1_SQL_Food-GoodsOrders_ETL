@@ -249,3 +249,181 @@ All the relationships between the tables loaded in the database are 1:n (one-to-
 
 ![EER Diagram](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/EER_Diagram.png)
 
+
+
+## Analytical Questions:
+
+I felt at this point it was important to list down the analytical questions I planned to answer as a part of this exercise to better understand what to include in the data warehouse from the tables. The main idea was to record and report the performance of Delivery Center in last four months. To do that the main analytical questions was further divided in four sub-questions, which are:
+
+1.	Monthly sales report (with option of choosing the month and daily sale from each segment of stores)
+2.	Top 10 stores by share of total sales 
+3.	Top 10 delivery drivers
+4.	Performance of channels by order and share of sales
+
+
+
+## Analytical Layer: 
+
+For the analytical layer, I created the data warehouse and stored it into the table “sales_details” using the following [queries](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/sales_deliveries_brazil_dw.sql). The [ETL Diagram](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/ETL_Diagram.png) below explains the entire ETL pipeline from start to end.
+
+
+<details>
+<summary>Please click the arrow to review the analytical layer code here.</summary>
+<pre>-- Creating the Analytical Layer (data warehouse) --
+
+
+USE deliveries_brazil;
+
+
+DROP PROCEDURE IF EXISTS CreateSalesDatawarehouse_Deliveries_Brazil;
+
+DELIMITER //
+
+CREATE PROCEDURE CreateSalesDatawarehouse_Deliveries_Brazil()
+BEGIN
+
+DROP TABLE IF EXISTS sales_details;
+
+		CREATE TABLE sales_details AS
+					select 
+					o.order_id,
+					o.order_amount,
+					o.order_status,
+					o.order_delivery_fee,
+					o.order_delivery_cost,
+                    order_delivery_fee - order_delivery_cost AS delivery_profit,
+					o.order_created_day,
+					o.order_created_month,
+					s.store_id,
+					s.store_name,
+					s.store_segment,
+					c.channel_id,
+					c.channel_name,
+					c.channel_type,
+					p.payment_id,
+					p.payment_amount,
+					p.payment_status,
+					d.delivery_id,
+					d.delivery_order_id,
+					d.delivery_status,
+					dr.driver_id,
+					dr.driver_modal,
+					dr.driver_type,
+                    h.hub_name,
+                    h.hub_city,
+                    h.hub_state
+					FROM orders o
+					JOIN stores s
+					USING (store_id)
+					JOIN channels c
+					USING (channel_id)
+					JOIN payments p
+					USING (payment_order_id)
+					JOIN deliveries d
+					USING (delivery_order_id)
+					JOIN drivers dr
+					USING (driver_id)
+                    JOIN hubs h
+                    USING (hub_id);
+
+END //
+DELIMITER ;
+
+CALL CreateSalesDatawarehouse_Deliveries_Brazil();</pre>
+</details>
+
+![ETL pipeline](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/ETL_Diagram.png)
+
+The data warehouse “sales_details” contains specific fields from all the tables created as a part of operational layer. To create the data warehouse, I first created a procedure that would join the tables to create the data warehouse. Below is a quick snapshot of the columns in the data warehouse.
+
+![warehouse](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/dw(sales_details)_table.png)
+
+
+
+## Data Marts:
+
+Finally, for the last stage of analytics for this data, I have created 4 views as data marts. Each view answers the aforementioned analytical question provided by Delivery Center to highlight its performance. All the marts were created using the following [queries](uhttps://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/deliveries_brazil_datamarts.sqlrl).
+
+###  1.	Monthly Sales Report By Store Segments
+The view contains store segment, price per unit, total orders, total sales all grouped by the day order was created. This view has a stored procedure attached to it which allows you to select a month for which you want to review the sales. 
+
+<details>
+<summary>Please click the arrow to review the code here and below provided is a snapshot of the mart.</summary>
+<pre>-- CREATING VIEW 1 - Monthly Sales Report By Store Segments --
+
+DROP VIEW IF EXISTS `Monthly_Sales_Report_By_Store_Segments`;
+
+CREATE VIEW `Monthly_Sales_Report_By_Store_Segments` AS
+SELECT 
+		order_created_day AS day,
+        order_created_month AS month,
+        store_segment,
+        ROUND((SELECT (SUM(payment_amount)/(COUNT(DISTINCT(order_id))))),2) AS price_per_unit,
+        COUNT(DISTINCT(order_id)) AS total_orders,
+        SUM(payment_amount) AS total_sales
+FROM sales_details
+GROUP BY month, day, store_segment;
+
+
+DROP PROCEDURE IF EXISTS Montly_Sales_Report;
+
+DELIMITER ??
+
+		CREATE PROCEDURE Montly_Sales_Report(
+			sales_month VARCHAR(15)
+		)
+		BEGIN
+
+			SELECT * FROM Monthly_Sales_Report_By_Store_Segments
+			WHERE month = sales_month;
+
+END ??
+DELIMITER ;
+
+CALL Montly_Sales_Report('March');
+
+-- END --
+
+![dm_1_sql](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/dm_1_sql.png)
+</pre>
+</details>
+
+![dm_1](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/dm_1.png)
+
+
+### 2.	 Top 10 Stores by Share Of Total Sales
+This mart highlights the performance of stores based on share of total sales. The columns included in the mart are store id, name, hub, city, state, total sales and percentage of total sales that each store contributed. This provides delivery center with the information required to understand which area of operation generates more/less sales so resources can be allocated accordingly to maintain a steady flow of orders from all operational sites. 
+
+
+<details>
+<summary>Please click the arrow to review the code here and below provided is a snapshot of the mart.</summary>
+<pre>-- CREATING VIEW 2 - Top 10 Stores by Share Of Total Sales -- 
+
+DROP VIEW IF EXISTS `Top_10_Stores_by_TotalSales`;
+
+CREATE VIEW `Top_10_Stores_by_TotalSales` AS
+SELECT 
+		store_id AS ID,
+        store_name AS Name,
+        hub_name AS Hub,
+        hub_city AS City,
+        hub_state AS State,
+        SUM(payment_amount) AS Total_Sales,
+		CONCAT(
+				CAST(SUM(payment_amount)/(SELECT SUM(payment_amount) 
+                FROM sales_details)*100 AS DECIMAL (14,2)),' %') 
+                AS Share_of_Total_Sales
+FROM sales_details
+GROUP BY ID, Name, Hub, City, State
+ORDER BY Total_Sales DESC LIMIT 10;
+        
+
+-- END --
+
+
+![dm_2_sql](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/dm_2_sql.png)
+</pre>
+</details>
+
+![dm_2](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/dm_2.png)
+
