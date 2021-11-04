@@ -514,6 +514,6 @@ ORDER BY Total_Orders DESC;
 ![dm_4](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_4.png)
 
 
-I hope you liked the project. By clicking on the links you can access the [entire code](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/Codes/complete_project_codes.sql) for this project in 1 file and the [EER Model](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/delivery_center_brazil_EER.mwb).
+I hope you liked the project. By clicking on the links you can access the [Entire Code](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/Codes/complete_project_codes.sql) for this project in 1 file and the [EER Model](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/delivery_center_brazil_EER.mwb).
 
 
