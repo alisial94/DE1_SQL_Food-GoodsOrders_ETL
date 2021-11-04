@@ -1,4 +1,4 @@
-# Delivery Center: Food & Goods orders in Brazil
+# Delivery Center: Food & Goods Orders in Brazil
 
 ## What is Delivery Center:
 With its various operational hubs spread across Brazil, the Delivery Center is a platform that integrates retailers 
