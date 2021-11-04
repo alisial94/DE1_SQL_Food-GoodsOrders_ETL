@@ -30,11 +30,8 @@ The dataset included the following tables:
 ## Operational Layer:
 
 To begin work it was essential to understand the dynamics and constraints of the dataset. At first, I performed some 
-cleaning exercises for the data in Excel. While reviewing the data in excel, [CSV files](url) provided by the client, I 
-noticed that majority of the tables had blank fields which required treatment and it seemed logical to remove them at 
-this stage to avoid complexity later. Also, one of the main tables  “orders” contained a lot of columns that I felt were 
-unnecessary for the task at hand, therefore after consulting the client I decided to delete those as well. The columns that 
-were removed are listed below:
+cleaning exercises for the data in Excel. While reviewing the data in excel, [CSV files](https://github.com/alisial94/Data-Engineering-1---SQL/tree/main/term_1/Data) provided by the client, I noticed that majority of the tables had blank fields which required treatment and it seemed logical to remove them at this stage to avoid complexity later. Also, one of the main tables  “orders” contained a lot of columns that I felt were 
+unnecessary for the task at hand, therefore after consulting the client I decided to delete those as well. The columns that were removed are listed below:
 
 Orders table: 
 order_created_hour, order_created_minute, order_moment_accepted, order_moment_collected, order_moment_in_expedition, 
