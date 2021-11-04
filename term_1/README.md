@@ -47,7 +47,7 @@ using following [queries](https://github.com/alisial94/Data-Engineering-1---SQL/
 
 <details>
 <summary>Please click the arrow to open the code here.</summary>
-<pre>$ -- OPERTAIONAL LAYER --
+<pre>-- OPERTAIONAL LAYER --
 
  -- Creating Schema --
  
@@ -281,7 +281,7 @@ The [ETL Diagram](https://github.com/alisial94/Data-Engineering-1---SQL/blob/mai
 
 <details>
 <summary>Please click the arrow to review the analytical layer code here.</summary>
-<pre>$ -- Creating the Analytical Layer (data warehouse) --
+<pre>-- Creating the Analytical Layer (data warehouse) --
 
 
 USE deliveries_brazil;
@@ -352,8 +352,168 @@ The data warehouse “sales_details” contains specific fields from all the tab
 ![dw](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dw(sales_details)_table.png)
 
 
+## Data Marts:
+
+Finally, for the last stage of analytics for this data, I have created 4 views as data marts. Each view answers the 
+aforementioned analytical question provided by Delivery Center to highlight its performance. All the marts were created 
+using the following [queries](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/Codes/deliveries_brazil_datamarts.sql).
+
+### 1.	Monthly Sales Report By Store Segments:
+The view contains store segment, price per unit, total orders, total sales all grouped by the day order was created. This view has a stored procedure attached to it which allows you to select a month for which you want to review the sales. 
+
+<details>
+<summary>Please click the arrow to review the code here and below you can view a snapshot of the mart.</summary>
+<pre>-- CREATING VIEW 1 - Monthly Sales Report By Store Segments --
+
+DROP VIEW IF EXISTS `Monthly_Sales_Report_By_Store_Segments`;
+
+CREATE VIEW `Monthly_Sales_Report_By_Store_Segments` AS
+SELECT 
+		order_created_day AS day,
+        order_created_month AS month,
+        store_segment,
+        ROUND((SELECT (SUM(payment_amount)/(COUNT(DISTINCT(order_id))))),2) AS price_per_unit,
+        COUNT(DISTINCT(order_id)) AS total_orders,
+        SUM(payment_amount) AS total_sales
+FROM sales_details
+GROUP BY month, day, store_segment;
+
+
+DROP PROCEDURE IF EXISTS Montly_Sales_Report;
+
+DELIMITER ??
+
+		CREATE PROCEDURE Montly_Sales_Report(
+			sales_month VARCHAR(15)
+		)
+		BEGIN
+
+			SELECT * FROM Monthly_Sales_Report_By_Store_Segments
+			WHERE month = sales_month;
+
+END ??
+DELIMITER ;
+
+CALL Montly_Sales_Report('March');
+
+-- END --
+
+![dm_1_sql](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_1_sql.png)
+
+</pre>
+</details>
+
+![dm_1](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_1.png)
+
+
+### 2.	Top 10 Stores by Share Of Total Sales
+This mart highlights the performance of stores based on share of total sales. The columns included in the mart are store id, name, hub, city, state, total sales and percentage of total sales that each store contributed. This provides delivery center with the information required to understand which area of operation generates more/less sales so resources can be allocated accordingly to maintain a steady flow of orders from all operational sites. 
+
+
+<details>
+<summary>Please click the arrow to review the code here and below you can view a snapshot of the mart.
+</summary>
+<pre>-- CREATING VIEW 2 - Top 10 Stores by Share Of Total Sales -- 
+
+DROP VIEW IF EXISTS `Top_10_Stores_by_TotalSales`;
+
+CREATE VIEW `Top_10_Stores_by_TotalSales` AS
+SELECT 
+		store_id AS ID,
+        store_name AS Name,
+        hub_name AS Hub,
+        hub_city AS City,
+        hub_state AS State,
+        SUM(payment_amount) AS Total_Sales,
+		CONCAT(
+				CAST(SUM(payment_amount)/(SELECT SUM(payment_amount) 
+                FROM sales_details)*100 AS DECIMAL (14,2)),' %') 
+                AS Share_of_Total_Sales
+FROM sales_details
+GROUP BY ID, Name, Hub, City, State
+ORDER BY Total_Sales DESC LIMIT 10;
+        
+
+-- END --
+
+
+![dm_2_sql](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_2_sql.png)
+
+</pre>
+</details>
+
+![dm_2](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_2.png)
 
 
 
+### 3.	Top 10 Delivery Drivers
+The mart intends to highlight the top performing drivers based on the number of orders they have delivered since January 2021 to April 2021. This mart provides the company with the opportunity to reward the top performers and highlight the drivers that are under performing and further investigate the reasons behind their poor performance. In this way not only will they be able to address the issues of drivers but also improve the overall delivery service. The view contains driver ID, vehicle, type of service, total orders delivered, total driver cost (for all the orders), avg price per delivery.
+
+<details>
+<summary>Please click the arrow to review the code here and below you can view a snapshot of the mart.</summary>
+<pre>-- CREATING VIEW 3 - Top 10 Delivery Drivers -- 
+
+
+DROP VIEW IF EXISTS `Top_10_Delivery_Drivers`;
+
+CREATE VIEW `Top_10_Delivery_Drivers` AS
+SELECT 
+		driver_id AS ID,
+        driver_modal AS Vehicle,
+        driver_type AS Type_of_Service,
+        COUNT(DISTINCT(order_id)) AS Total_Orders,
+		SUM(order_delivery_cost-order_delivery_fee) AS Total_Driver_Cost,
+        ROUND((SELECT (SUM(order_delivery_cost-order_delivery_fee)/(COUNT(order_id)))),2) AS avg_price_per_delivery
+FROM sales_details
+GROUP BY ID, Vehicle , Type_of_Service
+ORDER BY Total_Orders DESC LIMIT 10;
+
+
+-- END --
+
+![dm_3_sql](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_3_sql.png)
+
+</pre>
+</details>
+
+![dm_3](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_3.png)
+
+
+### 4.	Performance of Channels by Order & Share of Sales
+The view contains channel ID, name, type of channel, total orders and share of total sales generated by the channel. The idea was to highlight top/poor performing channels so that the company can decide upon which channels to review and either, try to improve its performance or drop them. The result shows that 61.8% of sales are generated though one channel while others only contribute small amounts which again, needs to be addressed by the company in order to know why this channel outperforms others or if they are they simply putting all their eggs in one basket. 
+
+<details>
+<summary>Please click the arrow to review the code here and below you can a snapshot of the mart.</summary>
+<pre>-- CREATING VIEW 4 - Performance of Channels by Order & Share of Sales -- 
+
+DROP VIEW IF EXISTS `Performance_of_Channels_by_Order&ShareofSales`;
+
+CREATE VIEW `Performance_of_Channels_by_Order&ShareofSales` AS
+SELECT 
+	   channel_id AS ID,
+       channel_name AS Name,
+       channel_type AS Type_of_Channel,
+       COUNT(DISTINCT(order_id)) AS Total_Orders,
+       CONCAT(
+				CAST(SUM(payment_amount)/(SELECT SUM(payment_amount) 
+                FROM sales_details)*100 AS DECIMAL (14,2)),' %') 
+                AS Share_of_Total_Sales
+FROM sales_details
+GROUP BY ID, Name , Type_of_Channel
+ORDER BY Total_Orders DESC;
+
+-- END --
+
+
+![dm_4_sql](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_4_sql.png)
+
+
+</pre>
+</details>
+
+![dm_4](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/png_files/dm_4.png)
+
+
+I hope you liked the project. By clicking on the links you can access the [entire code](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/Codes/complete_project_codes.sql) for this project in 1 file and the [EER Model](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/delivery_center_brazil_EER.mwb).
 
 
