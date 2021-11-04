@@ -268,7 +268,7 @@ I felt at this point it was important to list down the analytical questions I pl
 better understand what to include in the data warehouse from the tables. The main idea was to record and report the performance 
 of Delivery Center in last four months. To achieve that the main analytical questions were further divided in four sub-questions:
 
-1.	Monthly sales report (with option of choosing the month and daily sale from each segment of stores)
+1.	[Monthly sales report](https://github.com/alisial94/Data-Engineering-1---SQL/blob/main/term_1/README.md#1monthly-sales-report-by-store-segments) (with option of choosing the month and daily sale from each segment of stores)
 2.	Top 10 stores by share of total sales 
 3.	Top 10 delivery drivers
 4.	Performance of channels by order and share of sales
